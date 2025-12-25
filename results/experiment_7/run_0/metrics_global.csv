@@ -1,0 +1,5 @@
+experiment_id,experiment_run,round,global_accuracy
+7,0,0,0.1
+7,0,1,0.6619
+7,0,2,0.8801
+7,0,3,0.899
