@@ -10,7 +10,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # ========== CLIENT ==========
 class FlowerClient(NumPyClient):
-    def __init__(self, partition_id, net, trainloader, valloader,metrics_logger,transfer_manager,round_number=0):
+    def __init__(self, partition_id, net, trainloader, valloader,metrics_logger,transfer_manager,repr_extractor,round_number=0):
         self.partition_id = partition_id
         self.net = net
         self.trainloader = trainloader
@@ -20,6 +20,8 @@ class FlowerClient(NumPyClient):
         self.metrics_logger = metrics_logger
         self.global_net = copy.deepcopy(net)
         self.transfer_manager = transfer_manager
+        self.rep_extractor = repr_extractor
+    
     def get_parameters(self, config):
         print(f"[Client {self.partition_id}] get_parameters")
         return get_parameters_from_net(self.net)
@@ -31,30 +33,32 @@ class FlowerClient(NumPyClient):
         set_parameters(self.net, parameters)
         set_parameters(self.global_net, parameters)
 
-        #antes do treinamento
-        self.transfer_manager.on_round_start(
+        global_repr = self.repr_extractor.extract(
             self.global_net,
-            self.net,
-            self.trainloader,
-            self.round
+            self.valloader
         )
+
+        
         #treino
         train(self.net,self.trainloader,device,epochs=10)
 
-        #Chamada depois do treinamento 
-        transfer_metrics = self.transfer_manager.on_round_end(
-            self.global_net,
+       
+        local_repr = self.repr_extractor.extract(
             self.net,
-            self.trainloader,
-            self.round
+            self.valloader
         )
+
+        repr_cache = {
+            "global":global_repr,
+            "local":local_repr
+        }
 
         return (
             get_parameters_from_net(self.net),
             len(self.trainloader),
             {
                 "client_id": self.partition_id,
-                "kl_transfer": transfer_metrics["kl_transfer"]
+                
             }
             
         )

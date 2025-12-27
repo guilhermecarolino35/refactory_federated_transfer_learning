@@ -23,6 +23,9 @@ from utils.metrics_logger import MetricsLogger
 #Transferability manager
 from federated.transferability.kl_metric import KlTransferMetric
 from federated.transferability.manager import TransferabilityManager
+#extractor
+from federated.transferability.representation_extractor import RepresentationExtractor
+
 
 NUM_PARTITIONS = 10
 EXPERIMENT_ID = 7
@@ -46,6 +49,7 @@ def make_client_fn(metrics_logger):
             KlTransferMetric(device=device)
         ]
         transfer_manager = TransferabilityManager(transfer_metrics)
+        repr_extractor = RepresentationExtractor(device=device)
         return FlowerClient(
             partition_id,
             net,
@@ -53,6 +57,7 @@ def make_client_fn(metrics_logger):
             valloader,
             metrics_logger,
             transfer_manager,
+            repr_extractor
         ).to_client()
 
     return client_fn
