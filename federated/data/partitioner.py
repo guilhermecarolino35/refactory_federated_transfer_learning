@@ -6,12 +6,14 @@ import torchvision.transforms as transforms
 
 BATCH_SIZE = 64
 
-dirichlet_partitioner = DirichletPartitioner(
-    num_partitions=10, alpha=5.0, partition_by="label"
+
+
+
+def load_datasets(partition_id: int, num_partitions:int,alpha:float):
+    
+    dirichlet_partitioner = DirichletPartitioner(
+    num_partitions=num_partitions, alpha=alpha, partition_by="label"
 )
-
-
-def load_datasets(partition_id: int):
     fds = FederatedDataset(
     dataset="cifar10", partitioners={"train": dirichlet_partitioner}
     )

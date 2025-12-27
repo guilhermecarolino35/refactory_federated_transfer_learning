@@ -30,20 +30,29 @@ from federated.transferability.representation_extractor import RepresentationExt
 NUM_PARTITIONS = 10
 EXPERIMENT_ID = 8
 
+def get_alpha_for_run(run_id: int) -> float:
+    alphas = {
+        0: 0.5,
+       
+    }
+    return alphas[run_id]
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 
 
-def make_client_fn(metrics_logger):
+def make_client_fn(metrics_logger,alpha:float):
     def client_fn(context: Context) -> Client:
         net = Net().to(device)
 
         partition_id = context.node_config["partition-id"]
-        round_number = 0
+        
 
         trainloader, valloader, _ = load_datasets(
-            partition_id=partition_id
+            partition_id=partition_id,
+            num_partitions=NUM_PARTITIONS,
+            alpha=alpha
         )
         transfer_metrics = [
             KlTransferMetric()
@@ -66,13 +75,16 @@ def make_client_fn(metrics_logger):
 
 def run_experiment(experiment_id: int, experiment_run: int):
 
+
+    alpha = get_alpha_for_run(experiment_run)
+
     metrics_logger = MetricsLogger(
         experiment_id=experiment_id,
         experiment_run=experiment_run,
     )
 
     client = ClientApp(
-        client_fn=make_client_fn(metrics_logger)
+        client_fn=make_client_fn(metrics_logger, alpha)
     )
 
     server = ServerApp(
