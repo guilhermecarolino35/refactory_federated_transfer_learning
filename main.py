@@ -28,7 +28,7 @@ from federated.transferability.representation_extractor import RepresentationExt
 
 
 NUM_PARTITIONS = 10
-EXPERIMENT_ID = 7
+EXPERIMENT_ID = 8
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -46,7 +46,7 @@ def make_client_fn(metrics_logger):
             partition_id=partition_id
         )
         transfer_metrics = [
-            KlTransferMetric(device=device)
+            KlTransferMetric()
         ]
         transfer_manager = TransferabilityManager(transfer_metrics)
         repr_extractor = RepresentationExtractor(device=device)
