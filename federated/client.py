@@ -53,11 +53,15 @@ class FlowerClient(NumPyClient):
             "local":local_repr
         }
 
+
+        transfer_metrics = self.transfer_manager.compute_all(repr_cache,self.round)
+
         return (
             get_parameters_from_net(self.net),
             len(self.trainloader),
             {
                 "client_id": self.partition_id,
+                "kl_transfer" : transfer_metrics["kl_transfer"]
                 
             }
             

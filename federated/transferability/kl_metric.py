@@ -1,18 +1,22 @@
+import torch.nn.functional as F # type: ignore
 from federated.transferability.metric_base import TransferMetric
-from federated.transferability.compute_kl import compute_kl_divergence
+
 
 class KlTransferMetric(TransferMetric):
-    def __init__(self,device):
-       self.device = device
-       self.kl_value = None
+    def __init__(self,temperature: float =2.0):
+       
+       self.temperature = temperature
 
-    def on_round_start(self, global_model, local_model, dataloader, round_number):
-       pass
-    
-    def on_round_end(self, global_model, local_model, dataloader, round_number):
-       self.kl_value = compute_kl_divergence(global_model,local_model,dataloader,self.device)
-
-    def compute(self) -> dict:
-       return {
-          "kl_transfer":float(self.kl_value)
-          }
+    def compute(self, repr_cache:dict, round_number:int) -> dict:
+        logits_g = repr_cache["global"]["logits"]
+        logits_l = repr_cache["local"]["logits"]
+       
+        p_g = F.softmax(logits_g /self.temperature, dim=1)
+        log_p_l = F.log_softmax(logits_l/self.temperature, dim =1)
+        kl_per_sample = F.kl_div(
+            log_p_l, p_g, reduction="none"
+        ).sum(dim=1)
+        
+        return {
+            "kl_transfer": kl_per_sample.mean().item()
+        }
