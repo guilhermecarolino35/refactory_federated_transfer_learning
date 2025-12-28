@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 #src
 from models.resnet18 import Net
-from federated.data.partitioner import load_datasets
+from federated.data.partitioner import load_client_datasets
 from trainer.train import train 
 from trainer.test import test
 #flwr
@@ -32,8 +32,8 @@ EXPERIMENT_ID = 8
 
 def get_alpha_for_run(run_id: int) -> float:
     alphas = {
-        0: 0.5,
-       
+        0: 0.2,
+        1: 0.2,
     }
     return alphas[run_id]
 
@@ -49,7 +49,7 @@ def make_client_fn(metrics_logger,alpha:float):
         partition_id = context.node_config["partition-id"]
         
 
-        trainloader, valloader, _ = load_datasets(
+        trainloader, valloader= load_client_datasets(
             partition_id=partition_id,
             num_partitions=NUM_PARTITIONS,
             alpha=alpha

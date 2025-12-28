@@ -7,7 +7,7 @@ import torch
 
 from trainer.test import test
 from federated.param_handler import set_parameters,get_parameters_from_net
-from federated.data.partitioner import load_datasets
+from federated.data.partitioner import load_global_testloader
 
 from models.resnet18 import Net
 
@@ -59,7 +59,7 @@ def get_evaluate_fn(metrics_logger):
         print(f">>> Server evaluate for round {server_round} started teste do evaluate")
         # CARREGA O TESTLOADER GLOBAL (não particionado)
         # Usamos qualquer partition_id apenas para acessar a função de carregamento
-        _, _, testloader_global = load_datasets(partition_id=0)
+        testloader_global = load_global_testloader()
 
         # Avalia no conjunto de teste global
         loss, accuracy = test(net, testloader_global,device)
@@ -144,7 +144,7 @@ def make_server_fn(metrics_logger):
         )
 
         # Configure the server for 5 rounds of training
-        config = ServerConfig(num_rounds=3)
+        config = ServerConfig(num_rounds=2)
 
         return ServerAppComponents(strategy=strategy, config=config)
 

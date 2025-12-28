@@ -2,7 +2,6 @@ from federated.param_handler import set_parameters,get_parameters_from_net
 from flwr.client import Client, ClientApp, NumPyClient
 from trainer.test import test
 from trainer.train import train
-from federated.transferability.compute_kl import compute_kl_divergence
 import torch
 import copy
 
@@ -20,7 +19,8 @@ class FlowerClient(NumPyClient):
         self.metrics_logger = metrics_logger
         self.global_net = copy.deepcopy(net)
         self.transfer_manager = transfer_manager
-        self.rep_extractor = repr_extractor
+        
+        self.repr_extractor = repr_extractor
     
     def get_parameters(self, config):
         print(f"[Client {self.partition_id}] get_parameters")
