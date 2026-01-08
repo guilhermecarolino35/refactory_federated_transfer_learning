@@ -62,7 +62,8 @@ class FlowerClient(NumPyClient):
             {
                 "client_id": self.partition_id,
                 "kl_transfer" : transfer_metrics["kl_transfer"],
-                "js_transfer" : transfer_metrics["js_transfer"]
+                "js_transfer" : transfer_metrics["js_transfer"],
+                "mmd_transfer" : transfer_metrics["mmd_transfer"],
                 
             }
             

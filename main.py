@@ -24,6 +24,7 @@ from utils.metrics_logger import MetricsLogger
 from federated.transferability.kl_metric import KlTransferMetric
 from federated.transferability.manager import TransferabilityManager
 from federated.transferability.js_metric import JSTransferMetric
+from federated.transferability.mmd_metric import MMDTransferMetric
 #extractor
 from federated.transferability.representation_extractor import RepresentationExtractor
 
@@ -58,6 +59,7 @@ def make_client_fn(metrics_logger,alpha:float):
         transfer_metrics = [
             KlTransferMetric(),
             JSTransferMetric(),
+            MMDTransferMetric(sigma=1.0),
 
         ]
         transfer_manager = TransferabilityManager(transfer_metrics)
