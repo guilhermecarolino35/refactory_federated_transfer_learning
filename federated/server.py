@@ -45,7 +45,17 @@ def make_weighted_average(metrics_logger):
 
 
 
+class FedAvgWithRound(FedAvg):
+    def __init__(self, metrics_logger, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.metrics_logger = metrics_logger
 
+    def aggregate_fit(self, rnd, results, failures):
+       
+        self.metrics_logger.current_round = rnd
+
+        # chama o comportamento padrão do FedAvg
+        return super().aggregate_fit(rnd, results, failures)
 
 
 # FUNÇÃO: Avaliação centralizada no servidor
@@ -88,14 +98,15 @@ def make_fit_metrics_aggregation_fn(metrics_logger):
 
         weighted_kl_sum = 0.0
         total_examples = 0
-
+        weighted_js_sum = 0.0
         for num_examples, m in metrics:
 
             client_id = m["client_id"]
             kl_value = m["kl_transfer"]
-
+            js_value = m["js_transfer"]
             # média ponderada
             weighted_kl_sum += num_examples * kl_value
+            weighted_js_sum += num_examples * js_value
             total_examples += num_examples
 
             # log por cliente
@@ -104,49 +115,66 @@ def make_fit_metrics_aggregation_fn(metrics_logger):
                 round_number=round_number,
                 kl=kl_value
             )
+            metrics_logger.log_client_js(
+                client_id=client_id,
+                round_number=round_number,
+                js=js_value
+            )
 
         aggregated_metrics = {}
 
         # agregação global do round
         if total_examples > 0:
             kl_mean = weighted_kl_sum / total_examples
+            js_mean = weighted_js_sum / total_examples
             aggregated_metrics["kl_transfer_mean"] = kl_mean
+            aggregated_metrics["js_transfer_mean"] = js_mean
 
             metrics_logger.log_global_kl(
                 round_number=round_number,
                 kl_mean=kl_mean
             )
 
+            metrics_logger.log_global_js(
+                round_number=round_number,
+                js_mean=js_mean
+            )
+
         return aggregated_metrics
 
     return aggregate_fit_metrics
 
+
+
+
+
+
 #factory
 def make_server_fn(metrics_logger):
-    # server_fn com avaliação centralizada
     def server_fn(context: Context) -> ServerAppComponents:
         """Construct components that set the ServerApp behaviour."""
         net = Net().to(device)
         params = get_parameters_from_net(net)
 
-        # Create FedAvg strategy with CENTRALIZED evaluation
-        strategy = FedAvg(
-            fraction_fit=1.0,  # Sample 100% of available clients for training
-            fraction_evaluate=1.0,  # Sample 100% of available clients for evaluation
-            min_fit_clients=10,  # Never sample less than 10 clients for training
-            min_evaluate_clients=5,  # Never sample less than 5 clients for evaluation
-            min_available_clients=10,  # Wait until all 10 clients are available
+        strategy = FedAvgWithRound(
+            metrics_logger=metrics_logger,   # 🔑 IMPORTANTE
+            fraction_fit=1.0,
+            fraction_evaluate=1.0,
+            min_fit_clients=10,
+            min_evaluate_clients=5,
+            min_available_clients=10,
             initial_parameters=ndarrays_to_parameters(params),
-            fit_metrics_aggregation_fn = make_fit_metrics_aggregation_fn(metrics_logger),
-            evaluate_metrics_aggregation_fn=make_weighted_average(metrics_logger),  # Aggregate client metrics
-            # Avaliação centralizada no servidor
-            evaluate_fn=get_evaluate_fn(metrics_logger),  # Centralized evaluation on global test set
+            fit_metrics_aggregation_fn=make_fit_metrics_aggregation_fn(metrics_logger),
+            evaluate_metrics_aggregation_fn=make_weighted_average(metrics_logger),
+            evaluate_fn=get_evaluate_fn(metrics_logger),
         )
 
-        # Configure the server for 5 rounds of training
-        config = ServerConfig(num_rounds=2)
+        config = ServerConfig(num_rounds=3)
 
-        return ServerAppComponents(strategy=strategy, config=config)
+        return ServerAppComponents(
+            strategy=strategy,
+            config=config
+        )
 
     return server_fn
 

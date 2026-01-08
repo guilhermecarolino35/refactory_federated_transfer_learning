@@ -23,13 +23,14 @@ class MetricsLogger:
                 "kl_divergence"
             ]
         )
-        
-        self.metrics_global_kl = pd.DataFrame(
-            columns=[
+
+        self.metrics_per_client_js = pd.DataFrame(
+            columns= [
                 "experiment_id",
                 "experiment_run",
                 "round",
-                "kl_mean"
+                "client_id",
+                "js"
             ]
         )
 
@@ -43,6 +44,26 @@ class MetricsLogger:
 
             ]
         )
+        
+        self.metrics_global_kl = pd.DataFrame(
+            columns=[
+                "experiment_id",
+                "experiment_run",
+                "round",
+                "kl_mean"
+            ]
+        )
+
+        self.metrics_global_js = pd.DataFrame(
+            columns=[
+                "experiment_id",
+                "experiment_run",
+                "round",
+                "js_mean"
+            ]
+        )
+
+        
         self.metrics_global = pd.DataFrame(
             columns= [
                 "experiment_id",
@@ -88,6 +109,17 @@ class MetricsLogger:
         }
         self.metrics_global_kl.loc[len(self.metrics_global_kl)] = new_row
 
+    def log_global_js(self,round_number,js_mean):
+        new_row = {
+            "experiment_id":self.experiment_id,
+            "experiment_run":self.experiment_run,
+            "round":round_number,
+            "js_mean":js_mean,
+        }
+        self.metrics_global_js.loc[len(self.metrics_global_js)] = new_row
+
+
+
     def log_client_kl(self,client_id,round_number,kl):
         new_row = {
             "experiment_id":self.experiment_id,
@@ -98,6 +130,16 @@ class MetricsLogger:
         }
         self.metrics_per_client_kl.loc[len(self.metrics_per_client_kl)] = new_row
          
+    def log_client_js(self,client_id,round_number,js):
+        new_row = {
+            "experiment_id":self.experiment_id,
+            "experiment_run":self.experiment_run,
+            "round":round_number,
+            "client_id":client_id,
+            "js":js,
+        }
+        self.metrics_per_client_js.loc[len(self.metrics_per_client_js)] = new_row 
+
     def save(self):
         # results/experiment_X/run_Y
         base_dir = os.path.join(
@@ -112,8 +154,14 @@ class MetricsLogger:
         global_path = os.path.join(base_dir,"metrics_global.csv")
         kl_path = os.path.join(base_dir,"metrics_per_client_kl.csv")
         kl_global_path = os.path.join(base_dir,"kl_mean_round.csv")
+        js_path = os.path.join(base_dir,"metrics_per_client_js.csv")
+        js_global_path = os.path.join(base_dir,"js_mean_round.csv")
         #Save
         self.metrics_per_client.to_csv(client_path,index=False)
-        self.metrics_global.to_csv(global_path,index=False)
         self.metrics_per_client_kl.to_csv(kl_path,index=False)
+        self.metrics_per_client_js.to_csv(js_path,index=False)
+
+
+        self.metrics_global.to_csv(global_path,index=False)
         self.metrics_global_kl.to_csv(kl_global_path,index=False)
+        self.metrics_global_js.to_csv(js_global_path,index=False)

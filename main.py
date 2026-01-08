@@ -23,17 +23,18 @@ from utils.metrics_logger import MetricsLogger
 #Transferability manager
 from federated.transferability.kl_metric import KlTransferMetric
 from federated.transferability.manager import TransferabilityManager
+from federated.transferability.js_metric import JSTransferMetric
 #extractor
 from federated.transferability.representation_extractor import RepresentationExtractor
 
 
 NUM_PARTITIONS = 10
-EXPERIMENT_ID = 8
+EXPERIMENT_ID = 5
 
 def get_alpha_for_run(run_id: int) -> float:
     alphas = {
-        0: 0.2,
-        1: 0.2,
+        0: 0.05,
+        1: 0.05,
     }
     return alphas[run_id]
 
@@ -55,7 +56,9 @@ def make_client_fn(metrics_logger,alpha:float):
             alpha=alpha
         )
         transfer_metrics = [
-            KlTransferMetric()
+            KlTransferMetric(),
+            JSTransferMetric(),
+
         ]
         transfer_manager = TransferabilityManager(transfer_metrics)
         repr_extractor = RepresentationExtractor(device=device)
