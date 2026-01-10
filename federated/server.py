@@ -100,16 +100,19 @@ def make_fit_metrics_aggregation_fn(metrics_logger):
         total_examples = 0
         weighted_js_sum = 0.0
         weighted_mmd_sum = 0.0
+        weighted_fid_sum = 0.0
         for num_examples, m in metrics:
 
             client_id = m["client_id"]
             kl_value = m["kl_transfer"]
             js_value = m["js_transfer"]
             mmd_value = m["mmd_transfer"]
+            fid_value = m["frechet_transfer"]
             # média ponderada
             weighted_kl_sum += num_examples * kl_value
             weighted_js_sum += num_examples * js_value
             weighted_mmd_sum += num_examples * mmd_value
+            weighted_fid_sum += num_examples * fid_value
             total_examples += num_examples
 
             # log por cliente
@@ -129,17 +132,26 @@ def make_fit_metrics_aggregation_fn(metrics_logger):
                 mmd=mmd_value
             )
 
+            metrics_logger.log_client_fid(
+                client_id=client_id,
+                round_number=round_number,
+                fid=fid_value
+            )
+
+
+
         aggregated_metrics = {}
 
         # agregação global do round
         kl_mean = weighted_kl_sum/total_examples
         js_mean = weighted_js_sum/total_examples
         mmd_mean = weighted_mmd_sum/total_examples
+        fid_mean = weighted_fid_sum/total_examples
 
         aggregated_metrics["kl_transfer_mean"] = kl_mean
         aggregated_metrics["js_transfer_mean"] = js_mean
         aggregated_metrics["mmd_transfer_mean"] = mmd_mean
-
+        aggregated_metrics["fid_transfer_mean"] = fid_mean
 
         return aggregated_metrics
 
@@ -158,19 +170,19 @@ def make_server_fn(metrics_logger):
         params = get_parameters_from_net(net)
 
         strategy = FedAvgWithRound(
-            metrics_logger=metrics_logger,   # 🔑 IMPORTANTE
+            metrics_logger=metrics_logger,   
             fraction_fit=1.0,
             fraction_evaluate=1.0,
-            min_fit_clients=10,
+            min_fit_clients=5,
             min_evaluate_clients=5,
-            min_available_clients=10,
+            min_available_clients=25,
             initial_parameters=ndarrays_to_parameters(params),
             fit_metrics_aggregation_fn=make_fit_metrics_aggregation_fn(metrics_logger),
             evaluate_metrics_aggregation_fn=make_weighted_average(metrics_logger),
             evaluate_fn=get_evaluate_fn(metrics_logger),
         )
 
-        config = ServerConfig(num_rounds=3)
+        config = ServerConfig(num_rounds=10)
 
         return ServerAppComponents(
             strategy=strategy,

@@ -19,6 +19,7 @@ def load_client_datasets(
         num_partitions=num_partitions,
         alpha=alpha,
         partition_by="label",
+        min_partition_size=3,
     )
 
     # 2. Dataset federado (somente treino é particionado)

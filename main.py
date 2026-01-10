@@ -25,17 +25,28 @@ from federated.transferability.kl_metric import KlTransferMetric
 from federated.transferability.manager import TransferabilityManager
 from federated.transferability.js_metric import JSTransferMetric
 from federated.transferability.mmd_metric import MMDTransferMetric
+from federated.transferability.fid_metric import FrechetTransferMetric
 #extractor
 from federated.transferability.representation_extractor import RepresentationExtractor
 
+import os
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
-NUM_PARTITIONS = 10
-EXPERIMENT_ID = 5
+
+
+NUM_PARTITIONS = 25
+EXPERIMENT_ID = 2
+
+#Primeiro experimento numeros de clientes 10, 25, 50 . Porem todos com 10 rounds 
 
 def get_alpha_for_run(run_id: int) -> float:
     alphas = {
         0: 0.05,
-        1: 0.05,
+        1: 0.2,
+        2: 0.5,
+        3: 1.0,
+        4: 3.0,
+       
     }
     return alphas[run_id]
 
@@ -60,6 +71,8 @@ def make_client_fn(metrics_logger,alpha:float):
             KlTransferMetric(),
             JSTransferMetric(),
             MMDTransferMetric(sigma=1.0),
+            FrechetTransferMetric()
+
 
         ]
         transfer_manager = TransferabilityManager(transfer_metrics)
@@ -98,7 +111,7 @@ def run_experiment(experiment_id: int, experiment_run: int):
 
     backend_config = {"client_resources": {"num_cpus": 1, "num_gpus": 0.0}}
     if device == "cuda":
-        backend_config = {"client_resources": {"num_cpus": 1, "num_gpus": 1.0}}
+        backend_config = {"client_resources": {"num_cpus": 1, "num_gpus": 0.4}}
 
     run_simulation(
         server_app=server,
@@ -113,7 +126,7 @@ def run_experiment(experiment_id: int, experiment_run: int):
         f"id={experiment_id} | run={experiment_run}"
     )
 
-NUM_RUNS = 1
+NUM_RUNS = 5
 
 for run_id in range(NUM_RUNS):
     run_experiment(EXPERIMENT_ID, run_id)

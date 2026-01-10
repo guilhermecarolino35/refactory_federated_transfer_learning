@@ -45,6 +45,17 @@ class MetricsLogger:
             ]
         )
 
+        self.metrics_per_client_fid = pd.DataFrame(
+            columns= [
+                "experiment_id",
+                "experiment_run",
+                "round",
+                "client_id",
+                "fid"
+            ]
+        )
+
+
         self.metrics_per_client = pd.DataFrame(
             columns=[
                 "experiment_id",
@@ -108,7 +119,15 @@ class MetricsLogger:
         self.metrics_per_client_mmd.loc[len(self.metrics_per_client_mmd)] = new_row
          
 
-
+    def log_client_fid(self,client_id,round_number,fid):
+        new_row = {
+            "experiment_id":self.experiment_id,
+            "experiment_run":self.experiment_run,
+            "round":round_number,
+            "client_id":client_id,
+            "fid":fid,
+        }
+        self.metrics_per_client_fid.loc[len(self.metrics_per_client_fid)] = new_row
 
     def log_client_kl(self,client_id,round_number,kl):
         new_row = {
@@ -145,10 +164,11 @@ class MetricsLogger:
         kl_path = os.path.join(base_dir,"metrics_per_client_kl.csv")
         js_path = os.path.join(base_dir,"metrics_per_client_js.csv")
         mmd_path = os.path.join(base_dir,"metrics_per_client_mmd.csv")
+        fid_path = os.path.join(base_dir,"metrics_per_client_fid.csv")
         #Save
         self.metrics_per_client.to_csv(client_path,index=False)
         self.metrics_per_client_kl.to_csv(kl_path,index=False)
         self.metrics_per_client_js.to_csv(js_path,index=False)
         self.metrics_per_client_mmd.to_csv(mmd_path,index=False)
-
+        self.metrics_per_client_fid.to_csv(fid_path,index=False)
         self.metrics_global.to_csv(global_path,index=False)

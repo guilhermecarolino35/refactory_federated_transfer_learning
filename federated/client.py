@@ -28,7 +28,6 @@ class FlowerClient(NumPyClient):
 
     def fit(self, parameters, config):
         self.round += 1 
-        print(f"[Client {self.partition_id}] Iniciando round {self.round}")
         # Atualiza modelo local e global
         set_parameters(self.net, parameters)
         set_parameters(self.global_net, parameters)
@@ -64,15 +63,12 @@ class FlowerClient(NumPyClient):
                 "kl_transfer" : transfer_metrics["kl_transfer"],
                 "js_transfer" : transfer_metrics["js_transfer"],
                 "mmd_transfer" : transfer_metrics["mmd_transfer"],
-                
+                "frechet_transfer": transfer_metrics["fid_transfer"],
             }
             
         )
 
     def evaluate(self, parameters, config):
         set_parameters(self.net, parameters)
-        print("chamou o evaluate do client")
         loss, accuracy = test(self.net, self.valloader,device)
-        #self.metrics_logger.log_client_accuracy(client_id=self.partition_id,round_number=self.round,accuracy=accuracy)
-        print(f"[Client {self.partition_id}] evaluate, config: {config}, loss: {loss}, accuracy: {accuracy} evaluate called")
         return float(loss), len(self.valloader), {"accuracy": float(accuracy), "round": int(self.round),"client_id": self.partition_id}
