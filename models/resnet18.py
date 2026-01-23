@@ -25,6 +25,22 @@ class Net(nn.Module):
         x = torch.flatten(x, 1)     # (B, 512)
         return x
 
+
+
+    def freeze_backbone(self):
+        """Freeze all layers except the classification head (fc)."""
+        for name, param in self.model.named_parameters():
+            if not name.startswith("fc"):
+                param.requires_grad = False
+
+        for param in self.model.fc.parameters():
+            param.requires_grad = True
+
+    def unfreeze_backbone(self):
+        """Unfreeze the whole network."""
+        for param in self.model.parameters():
+            param.requires_grad = True
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         features = self.extract_features(x)
         logits = self.model.fc(features)

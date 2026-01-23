@@ -5,7 +5,7 @@ from typing import Optional
 import pandas as pd
 
 class MetricsLogger:
-    def __init__(self, experiment_id, experiment_run, outdir="results"):
+    def __init__(self, experiment_id, experiment_run, outdir="results_resnet_fashion_mnist"):
         self.experiment_id = experiment_id
         self.experiment_run = experiment_run
         self.outdir = outdir
@@ -67,7 +67,16 @@ class MetricsLogger:
             ]
         )
         
-       
+        self.metrics_per_client_last_layer_acc = pd.DataFrame(
+            columns=[
+                "experiment_id",
+                "experiment_run",
+                "round",
+                "client_id",
+                "accuracy",
+
+            ]
+        )
 
         
         self.metrics_global = pd.DataFrame(
@@ -94,6 +103,22 @@ class MetricsLogger:
 
         # Adiciona a nova linha ao DataFrame
         self.metrics_per_client.loc[len(self.metrics_per_client)] = new_row
+
+    # logando a acuracia de um cliente porem para o experimento da ultima camada 
+    def log_client_accuracy_last_layer(self, client_id: int, round_number: int, accuracy: float):
+        """Log accuracy of a single client for a given round."""
+
+        new_row = {
+            "experiment_id": self.experiment_id,
+            "experiment_run": self.experiment_run,
+            "round": round_number,
+            "client_id": client_id,
+            "accuracy": accuracy,
+        }
+
+        # Adiciona a nova linha ao DataFrame
+        self.metrics_per_client_last_layer_acc.loc[len(self.metrics_per_client_last_layer_acc)] = new_row
+
 
 
     def log_global_accuracy(self,round_number:int,accuracy:float):
@@ -160,15 +185,19 @@ class MetricsLogger:
 
         #Paths
         client_path = os.path.join(base_dir,"metrics_per_client.csv")
+        client_path_last_layer = os.path.join(base_dir,"metrics_per_client_lastlayer.csv")
         global_path = os.path.join(base_dir,"metrics_global.csv")
         kl_path = os.path.join(base_dir,"metrics_per_client_kl.csv")
         js_path = os.path.join(base_dir,"metrics_per_client_js.csv")
         mmd_path = os.path.join(base_dir,"metrics_per_client_mmd.csv")
         fid_path = os.path.join(base_dir,"metrics_per_client_fid.csv")
+
         #Save
         self.metrics_per_client.to_csv(client_path,index=False)
+        self.metrics_per_client_last_layer_acc.to_csv(client_path_last_layer,index=False)
         self.metrics_per_client_kl.to_csv(kl_path,index=False)
         self.metrics_per_client_js.to_csv(js_path,index=False)
         self.metrics_per_client_mmd.to_csv(mmd_path,index=False)
         self.metrics_per_client_fid.to_csv(fid_path,index=False)
         self.metrics_global.to_csv(global_path,index=False)
+

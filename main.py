@@ -4,8 +4,11 @@ import torch.nn as nn
 import torch.nn.functional as F 
 
 #src
+#Models
 from models.resnet18 import Net
-from federated.data.partitioner import load_client_datasets
+from models.light_cnn import LightCNN
+from models.resnet18_fashion_mnist import ResNet18FashionMNIST
+from federated.data.partitiorner_fashio_mnist import load_client_datasets
 from trainer.train import train 
 from trainer.test import test
 #flwr
@@ -34,8 +37,8 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
 
 
-NUM_PARTITIONS = 25
-EXPERIMENT_ID = 2
+NUM_PARTITIONS = 100
+EXPERIMENT_ID = 4
 
 #Primeiro experimento numeros de clientes 10, 25, 50 . Porem todos com 10 rounds 
 
@@ -57,7 +60,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 def make_client_fn(metrics_logger,alpha:float):
     def client_fn(context: Context) -> Client:
-        net = Net().to(device)
+        net = ResNet18FashionMNIST().to(device)
 
         partition_id = context.node_config["partition-id"]
         

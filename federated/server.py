@@ -7,10 +7,11 @@ import torch
 
 from trainer.test import test
 from federated.param_handler import set_parameters,get_parameters_from_net
-from federated.data.partitioner import load_global_testloader
+from federated.data.partitiorner_fashio_mnist import load_global_testloader
 
 from models.resnet18 import Net
-
+from models.light_cnn import LightCNN
+from models.resnet18_fashion_mnist import ResNet18FashionMNIST
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -64,7 +65,7 @@ def get_evaluate_fn(metrics_logger):
     def evaluate_fn(server_round: int, parameters: NDArrays, config: Dict[str, Scalar]):
         metrics_logger.current_round = server_round 
         # Carrega o modelo global no servidor
-        net = Net().to(device)
+        net = ResNet18FashionMNIST().to(device)
         set_parameters(net, parameters)
         print(f">>> Server evaluate for round {server_round} started teste do evaluate")
         # CARREGA O TESTLOADER GLOBAL (não particionado)
@@ -166,7 +167,7 @@ def make_fit_metrics_aggregation_fn(metrics_logger):
 def make_server_fn(metrics_logger):
     def server_fn(context: Context) -> ServerAppComponents:
         """Construct components that set the ServerApp behaviour."""
-        net = Net().to(device)
+        net = ResNet18FashionMNIST().to(device)
         params = get_parameters_from_net(net)
 
         strategy = FedAvgWithRound(
@@ -175,14 +176,14 @@ def make_server_fn(metrics_logger):
             fraction_evaluate=1.0,
             min_fit_clients=5,
             min_evaluate_clients=5,
-            min_available_clients=25,
+            min_available_clients=10,
             initial_parameters=ndarrays_to_parameters(params),
             fit_metrics_aggregation_fn=make_fit_metrics_aggregation_fn(metrics_logger),
             evaluate_metrics_aggregation_fn=make_weighted_average(metrics_logger),
             evaluate_fn=get_evaluate_fn(metrics_logger),
         )
 
-        config = ServerConfig(num_rounds=10)
+        config = ServerConfig(num_rounds=20)
 
         return ServerAppComponents(
             strategy=strategy,
